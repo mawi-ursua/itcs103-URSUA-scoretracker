@@ -1,0 +1,75 @@
+import tkinter as tk
+from tkinter import messagebox
+from openpyxl import load_workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+
+def validate_inputs():
+    name = name_entry.get()
+    grade = grade_entry.get()
+
+    if not name or not grade:
+        messagebox.showerror("Input Error", "All fields are required!")
+        return False
+    return True
+
+def save_to_excel():
+    if not validate_inputs():
+        return
+    
+    name = name_entry.get()
+    grade = grade_entry.get()
+
+    wb = load_workbook("studgrade.xlsx")
+    ws = wb["Student Grade"]
+    ws.append([name, grade,])
+    wb.save("studgrade.xlsx")
+
+    format_excel()  
+    messagebox.showinfo("Success", "Data saved successfully!")
+
+    name_entry.delete(0, tk.END)
+    grade_entry.delete(0, tk.END)
+
+def format_excel():
+    wb = load_workbook("studgrade.xlsx")
+    ws = wb["Student Grade"]
+
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    for col in ws.columns:
+        max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col)
+        col_letter = get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+    wb.save("studgrade.xlsx")
+
+def show_data():
+    wb = load_workbook("studgrade.xlsx")
+    ws = wb["Student Grade"]
+
+    data_window = tk.Toplevel(window)
+    data_window.title("Stored User Data")
+
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        for j, value in enumerate(row):
+            label = tk.Label(data_window, text=value, borderwidth=1, relief="solid", padx=6, pady=3)
+            label.grid(row=i, column=j)
+
+window = tk.Tk()
+window.title("User Data Form")
+
+tk.Label(window, text="Name").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+tk.Label(window, text="Score").grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+name_entry = tk.Entry(window, width=25)
+grade_entry = tk.Entry(window, width=25)
+
+name_entry.grid(row=0, column=1, pady=5)
+grade_entry.grid(row=1, column=1, pady=5)
+
+tk.Button(window, text="Submit", command=save_to_excel, width=20, bg="#FFB6C1", fg="black").grid(row=3, column=0, columnspan=2, pady=10)
+tk.Button(window, text="View Stored Data", command=show_data, width=20, bg="#FAA0A0", fg="black").grid(row=4, column=0, columnspan=2)
+
+window.mainloop()
